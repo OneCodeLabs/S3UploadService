@@ -31,7 +31,6 @@ import java.io.File;
 public class S3UploadService extends IntentService {
 
     private static final String TAG = "S3UploadService";
-    private static final boolean VERBOSE = true;
 
     private static final String ACTION_UPLOAD = "com.onecode.android.services.live.action.UPLOAD";
 
@@ -41,6 +40,8 @@ public class S3UploadService extends IntentService {
     private static final String EXTRA_FILE = "com.onecode.android.services.live.extra.FILE";
     private static final String EXTRA_DELETE_FILE = "com.onecode.android.services.live.extra.DELETE_FILE";
     private static final String EXTRA_S3_CALLBACK = "com.onecode.android.services.live.extra.S3_CALLBACK";
+
+    private static boolean VERBOSE = true;
 
     public S3UploadService() {
         super(TAG);
@@ -102,7 +103,10 @@ public class S3UploadService extends IntentService {
             e.printStackTrace();
         } catch (AmazonS3Exception s3e) {
             // Possible Bad Digest. Retry
-            Log.w(TAG, "AmazonS3Exception. retrying.");
+            if (VERBOSE) {
+                Log.w(TAG, "AmazonS3Exception. retrying.");
+                Log.d(TAG, s3e.toString());
+            }
         }
 
 //        It's only when the s3Callback provided isn't null that we will send the broadcast message
@@ -158,10 +162,10 @@ public class S3UploadService extends IntentService {
                             file.delete();
                         }
                     } else if (progressEvent.getEventCode() == ProgressEvent.FAILED_EVENT_CODE) {
-                        Log.e(TAG, String.format(S3UploadService.this.getString(R.string.s3_format_upload_failed), url));
+                        if (VERBOSE) Log.e(TAG, String.format(S3UploadService.this.getString(R.string.s3_format_upload_failed), url));
                     }
                 } catch (Exception excp) {
-                    Log.e(TAG, "ProgressListener error");
+                    if (VERBOSE) Log.e(TAG, "ProgressListener error");
                     excp.printStackTrace();
                 }
             }
@@ -170,4 +174,8 @@ public class S3UploadService extends IntentService {
         return por;
     }
 //    endregion
+
+    public static void setVerbose(boolean verbose) {
+        S3UploadService.VERBOSE = verbose;
+    }
 }
